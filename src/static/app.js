@@ -552,6 +552,31 @@ document.addEventListener("DOMContentLoaded", () => {
             .join("")}
         </ul>
       </div>
+      <div class="social-share-container">
+        <span class="social-share-label">Share:</span>
+        <div class="social-share-buttons">
+          <button class="share-button share-facebook tooltip" data-activity="${name}" data-action="facebook" title="Share on Facebook">
+            f
+            <span class="tooltip-text">Share on Facebook</span>
+          </button>
+          <button class="share-button share-twitter tooltip" data-activity="${name}" data-action="twitter" title="Share on Twitter">
+            𝕏
+            <span class="tooltip-text">Share on Twitter</span>
+          </button>
+          <button class="share-button share-linkedin tooltip" data-activity="${name}" data-action="linkedin" title="Share on LinkedIn">
+            in
+            <span class="tooltip-text">Share on LinkedIn</span>
+          </button>
+          <button class="share-button share-email tooltip" data-activity="${name}" data-action="email" title="Share via Email">
+            ✉
+            <span class="tooltip-text">Share via Email</span>
+          </button>
+          <button class="share-button share-copy tooltip" data-activity="${name}" data-action="copy" title="Copy link">
+            🔗
+            <span class="tooltip-text">Copy link</span>
+          </button>
+        </div>
+      </div>
       <div class="activity-card-actions">
         ${
           currentUser
@@ -575,6 +600,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const deleteButtons = activityCard.querySelectorAll(".delete-participant");
     deleteButtons.forEach((button) => {
       button.addEventListener("click", handleUnregister);
+    });
+
+    // Add click handlers for social share buttons
+    const shareButtons = activityCard.querySelectorAll(".share-button");
+    shareButtons.forEach((button) => {
+      button.addEventListener("click", handleShare);
     });
 
     // Add click handler for register button (only when authenticated)
@@ -750,6 +781,104 @@ document.addEventListener("DOMContentLoaded", () => {
         }, 300);
       }
     });
+  }
+
+  // Handle social sharing
+  function handleShare(event) {
+    const activityName = event.currentTarget.dataset.activity;
+    const action = event.currentTarget.dataset.action;
+    const activity = allActivities[activityName];
+
+    if (!activity) return;
+
+    // Create shareable content
+    const url = window.location.href;
+    const title = `${activityName} at Mergington High School`;
+    const description = activity.description;
+    const schedule = formatSchedule(activity);
+    const text = `Check out ${activityName}! ${description} Schedule: ${schedule}`;
+
+    switch (action) {
+      case "facebook":
+        shareFacebook(url, title);
+        break;
+      case "twitter":
+        shareTwitter(url, text);
+        break;
+      case "linkedin":
+        shareLinkedIn(url, title, description);
+        break;
+      case "email":
+        shareEmail(title, text, url);
+        break;
+      case "copy":
+        copyToClipboard(url, event.currentTarget);
+        break;
+    }
+  }
+
+  // Share on Facebook
+  function shareFacebook(url, title) {
+    const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
+      url
+    )}`;
+    window.open(shareUrl, "_blank", "width=600,height=400");
+  }
+
+  // Share on Twitter
+  function shareTwitter(url, text) {
+    const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
+      text
+    )}&url=${encodeURIComponent(url)}`;
+    window.open(shareUrl, "_blank", "width=600,height=400");
+  }
+
+  // Share on LinkedIn
+  function shareLinkedIn(url, title, description) {
+    const shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(
+      url
+    )}`;
+    window.open(shareUrl, "_blank", "width=600,height=400");
+  }
+
+  // Share via Email
+  function shareEmail(subject, body, url) {
+    const mailtoUrl = `mailto:?subject=${encodeURIComponent(
+      subject
+    )}&body=${encodeURIComponent(body + "\n\n" + url)}`;
+    window.location.href = mailtoUrl;
+  }
+
+  // Copy link to clipboard
+  function copyToClipboard(text, button) {
+    navigator.clipboard
+      .writeText(text)
+      .then(() => {
+        // Show success feedback
+        button.classList.add("copied");
+        showCopySuccessMessage();
+
+        // Reset button after 2 seconds
+        setTimeout(() => {
+          button.classList.remove("copied");
+        }, 2000);
+      })
+      .catch((err) => {
+        console.error("Failed to copy:", err);
+        showMessage("Failed to copy link", "error");
+      });
+  }
+
+  // Show copy success message
+  function showCopySuccessMessage() {
+    const message = document.createElement("div");
+    message.className = "copy-success-message";
+    message.textContent = "Link copied to clipboard!";
+    document.body.appendChild(message);
+
+    setTimeout(() => {
+      message.remove();
+    }, 3000);
   }
 
   // Handle unregistration with confirmation
